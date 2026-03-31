@@ -7,7 +7,8 @@ async function list(req, res, next) {
     let query = supabase
       .from('equipment')
       .select('*, profiles(full_name, location_city)')
-      .eq('status', status);
+      .eq('status', status)
+      .eq('approval_status', 'approved');
 
     if (category) query = query.eq('category', category);
     if (city) query = query.ilike('location_city', `%${city}%`);
@@ -49,6 +50,7 @@ async function create(req, res, next) {
         name, brand, model, year, category, description, daily_rate,
         location_city, location_state, location_lat, location_lng,
         photos: photos || [],
+        approval_status: 'pending',
       })
       .select()
       .single();

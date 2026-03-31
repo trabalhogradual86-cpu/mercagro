@@ -9,5 +9,6 @@ router.get('/my', ctrl.myRentals);
 router.get('/incoming', ctrl.incoming);
 router.patch('/:id/confirm', ctrl.confirm);
 router.patch('/:id/cancel', ctrl.cancel);
+router.patch('/:id/complete', ctrl.complete);
 
 module.exports = router;

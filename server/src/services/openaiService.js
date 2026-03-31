@@ -1,8 +1,10 @@
 const OpenAI = require('openai');
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const AI_ENABLED = !!process.env.OPENAI_API_KEY;
+const openai = AI_ENABLED ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 async function recommendEquipment({ crop_type, soil_type, area_ha, location_city, location_state, period }) {
+  if (!AI_ENABLED) throw new Error('IA temporariamente indisponível');
   const prompt = `Você é um especialista em máquinas agrícolas brasileiras.
 Com base nos dados abaixo, recomende os tipos de equipamentos mais adequados para locação:
 
@@ -35,6 +37,7 @@ Responda SOMENTE em JSON com este formato exato:
 }
 
 async function suggestPrice({ equipment_category, brand, model, year, location_state }) {
+  if (!AI_ENABLED) throw new Error('IA temporariamente indisponível');
   const prompt = `Você é um especialista em precificação de aluguel de máquinas agrícolas no Brasil.
 Estime o valor justo de diária (em R$) para o equipamento abaixo:
 

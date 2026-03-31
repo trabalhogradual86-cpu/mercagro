@@ -9,12 +9,18 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Carrega sessão inicial — setLoading(false) só após profile carregar
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      setLoading(false);
+      try {
+        if (session?.user) await fetchProfile(session.user.id);
+      } finally {
+        setLoading(false);
+      }
     });
 
+    // Reage a mudanças de auth (login, logout, token refresh)
+    // Não usa await para não bloquear — profile atualiza em background
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
@@ -26,6 +32,13 @@ export function AuthProvider({ children }) {
 
   async function fetchProfile(userId) {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data?.is_blocked) {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      alert('Sua conta foi bloqueada. Entre em contato com o suporte.');
+      return;
+    }
     setProfile(data);
   }
 

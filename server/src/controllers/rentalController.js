@@ -18,6 +18,17 @@ async function create(req, res, next) {
     if (days <= 0) return res.status(400).json({ error: 'Período inválido' });
 
     const total_amount = days * equipment.daily_rate;
+    const platform_fee = parseFloat((total_amount * 0.01).toFixed(2));
+
+    // Verificar se o locatário está bloqueado
+    const { data: renterProfile } = await supabase
+      .from('profiles')
+      .select('is_blocked')
+      .eq('id', req.user.id)
+      .single();
+    if (renterProfile?.is_blocked) {
+      return res.status(403).json({ error: 'Sua conta está bloqueada. Entre em contato com o suporte.' });
+    }
 
     const { data, error } = await supabase
       .from('rentals')
@@ -29,6 +40,7 @@ async function create(req, res, next) {
         end_date,
         daily_rate: equipment.daily_rate,
         total_amount,
+        platform_fee,
       })
       .select()
       .single();
@@ -44,7 +56,7 @@ async function myRentals(req, res, next) {
   try {
     const { data, error } = await supabase
       .from('rentals')
-      .select('*, equipment(name, brand, model, photos), profiles!rentals_owner_id_fkey(full_name)')
+      .select('*, equipment(name, brand, model, photos), owner:profiles!rentals_owner_id_fkey(full_name)')
       .eq('renter_id', req.user.id)
       .order('created_at', { ascending: false });
 
@@ -140,4 +152,38 @@ async function cancel(req, res, next) {
   }
 }
 
-module.exports = { create, myRentals, incoming, confirm, cancel };
+async function complete(req, res, next) {
+  try {
+    const { data: rental, error: fetchErr } = await supabase
+      .from('rentals')
+      .select('owner_id, status, equipment_id')
+      .eq('id', req.params.id)
+      .single();
+
+    if (fetchErr || !rental) return res.status(404).json({ error: 'Locação não encontrada' });
+    if (rental.owner_id !== req.user.id) return res.status(403).json({ error: 'Sem permissão' });
+    if (!['confirmed', 'active'].includes(rental.status)) {
+      return res.status(400).json({ error: 'Locação não pode ser concluída neste status' });
+    }
+
+    const { data, error } = await supabase
+      .from('rentals')
+      .update({ status: 'completed' })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await supabase
+      .from('equipment')
+      .update({ status: 'available' })
+      .eq('id', rental.equipment_id);
+
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { create, myRentals, incoming, confirm, cancel, complete };
