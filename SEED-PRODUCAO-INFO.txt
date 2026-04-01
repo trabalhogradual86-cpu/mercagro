@@ -1,0 +1,69 @@
+═══════════════════════════════════════════════════════
+  MERCAGRO — SEED DE PRODUÇÃO
+  Criado em: 01/04/2026
+  Arquivo:   mercagro/seed-producao.js
+═══════════════════════════════════════════════════════
+
+COMO RODAR
+──────────
+  cd mercagro
+  node seed-producao.js
+
+  (pode rodar múltiplas vezes — detecta usuários já existentes)
+
+
+O QUE É CRIADO
+──────────────
+  Usuários:       ~41
+    - 1 admin
+    - 15 proprietários  (user_type: owner)
+    - 20 produtores     (user_type: producer)
+    - 5 ambos           (user_type: both)
+
+  Equipamentos:   ~100-150
+    - 72 modelos diferentes
+    - 8 categorias: Trator, Colheitadeira, Plantadeira,
+      Pulverizador, Grade, Implemento, Irrigação, Transporte
+    - Distribuídos aleatoriamente entre os donos
+    - Todos com approval_status = 'approved'
+
+  Locações:       ~72
+    - 35 concluídas (completed) — passado
+    - 12 ativas     (active)    — em andamento
+    - 10 confirmadas(confirmed) — futuro próximo
+    - 10 pendentes  (pending)
+    - 5  canceladas (cancelled)
+
+  Leilões:        ~38
+    - 13 ativos     (active)    — já iniciados
+    - 10 agendados  (scheduled) — ainda não iniciaram
+    - 13 finalizados(finished)  — com vencedor
+    - 2  cancelados (cancelled)
+    - Cada leilão tem entre 2 e 12 lances (bids)
+
+  Avaliações:     ~40+
+    - ~80% das locações concluídas têm review do produtor
+    - ~50% têm review do dono sobre o produtor
+
+
+CREDENCIAIS DE ACESSO
+──────────────────────
+  ADMIN        → admin@mercagro.com            | Admin@123456
+  PROPRIETÁRIO → proprietario1@mercagro.com    | Teste@123456
+                 proprietario2@mercagro.com    | Teste@123456
+                 ... até proprietario15
+  PRODUTOR     → produtor1@mercagro.com        | Teste@123456
+                 produtor2@mercagro.com        | Teste@123456
+                 ... até produtor20
+  AMBOS        → agro1@mercagro.com            | Teste@123456
+                 agro2@mercagro.com            | Teste@123456
+                 ... até agro5
+
+
+DIFERENÇAS DO seed.js ORIGINAL
+────────────────────────────────
+  - seed.js cria 2 usuários e ~52 equipamentos (seed básico)
+  - seed-producao.js cria ~41 usuários, ~150 equipamentos,
+    leilões/locações em vários estados, reviews, bids realistas
+
+═══════════════════════════════════════════════════════

@@ -34,4 +34,5 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Servidor Mercagro rodando na porta ${PORT}`);
+  require('./jobs/index');
 });

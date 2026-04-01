@@ -1,14 +1,16 @@
+/* Aba admin por indice: div em main com exatamente 6 botoes filhos (barra de abas) */
 (function () {
   var i = __INDEX__;
-  var names = ['Visão Geral', 'Usuários', 'Equipamentos', 'Locações', 'Leilões', 'Contabilidade'];
-  var name = names[i];
-  var r = document.querySelector('h1') && document.querySelector('h1').parentElement;
-  var t = r && Array.from(r.children).find(function (c) {
-    return c.querySelectorAll(':scope > button').length === 6;
+  var main = document.querySelector('main');
+  if (!main) return 'no-main';
+  var tabRow = Array.from(main.querySelectorAll('div')).find(function (d) {
+    return d.querySelectorAll(':scope > button').length === 6;
   });
-  var b = t && Array.from(t.querySelectorAll('button')).find(function (x) {
-    return (x.innerText || '').trim() === name;
-  });
-  if (b) b.click();
-  return b ? 'ok' : 'no';
+  if (!tabRow) return 'no-row';
+  var buttons = Array.from(tabRow.querySelectorAll(':scope > button'));
+  var btn = buttons[i];
+  if (!btn) return 'no-idx';
+  btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  btn.click();
+  return 'ok';
 })();
