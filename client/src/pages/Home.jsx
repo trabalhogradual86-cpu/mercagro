@@ -47,10 +47,10 @@ export default function Home() {
             Conectamos produtores rurais e proprietários de equipamentos em um ambiente digital seguro, eficiente e acessível para todo o Brasil.
           </p>
           <div className="animate-fade-up delay-3" style={s.heroCTA}>
-            <button className="btn btn-amber btn-lg" onClick={() => navigate('/equipment')}>
+            <button className="btn btn-amber btn-lg" onClick={() => navigate('/equipamentos')}>
               Buscar Equipamentos
             </button>
-            <button className="btn btn-outline btn-lg" onClick={() => navigate('/auctions')}>
+            <button className="btn btn-outline btn-lg" onClick={() => navigate('/leiloes')}>
               Ver Leilões Ativos
             </button>
           </div>
@@ -99,10 +99,10 @@ export default function Home() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-          <button className="btn btn-amber btn-lg" onClick={() => navigate('/register')}>
+          <button className="btn btn-amber btn-lg" onClick={() => navigate('/cadastrar')}>
             Cadastrar Equipamento
           </button>
-          <button className="btn btn-outline" onClick={() => navigate('/login')}>
+          <button className="btn btn-outline" onClick={() => navigate('/entrar')}>
             Já tenho conta
           </button>
         </div>

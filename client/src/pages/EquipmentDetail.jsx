@@ -211,7 +211,7 @@ export default function EquipmentDetail() {
           {!user && (
             <div className="card">
               <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)' }}>
-                <a href="/login" style={{ color: 'var(--green-700)' }}>Entre na plataforma</a> para solicitar a locação deste equipamento.
+                <a href="/entrar" style={{ color: 'var(--green-700)' }}>Entre na plataforma</a> para solicitar a locação deste equipamento.
               </p>
             </div>
           )}

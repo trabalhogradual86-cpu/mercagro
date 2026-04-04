@@ -49,7 +49,7 @@ function StatusBadge({ value }) {
   );
 }
 
-function StatCard({ icon, label, value, accent }) {
+function StatCard({ label, value, accent }) {
   return (
     <div className="card" style={{
       flex: 1,
@@ -59,7 +59,6 @@ function StatCard({ icon, label, value, accent }) {
       flexDirection: 'column',
       gap: 'var(--space-xs)',
     }}>
-      <div style={{ fontSize: '1.5rem' }}>{icon}</div>
       <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-600)' }}>
         {label}
       </p>
@@ -228,11 +227,11 @@ export default function AdminDashboard() {
         <div className="animate-fade-in">
           {stats ? (
             <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', marginBottom: 'var(--space-xl)' }}>
-              <StatCard icon="👥" label="Usuários cadastrados" value={stats.totalUsers}     accent="var(--green-500)" />
-              <StatCard icon="🚜" label="Equipamentos"         value={stats.totalEquipment} accent="var(--green-700)" />
-              <StatCard icon="⏳" label="Aguardando aprovação" value={stats.pendingEquipment} accent="var(--amber-500)" />
-              <StatCard icon="📋" label="Locações ativas"      value={stats.activeRentals}  accent="var(--green-600)" />
-              <StatCard icon="💰" label="Receita da plataforma"
+              <StatCard label="Usuários cadastrados" value={stats.totalUsers}     accent="var(--green-500)" />
+              <StatCard label="Equipamentos"         value={stats.totalEquipment} accent="var(--green-700)" />
+              <StatCard label="Aguardando aprovação" value={stats.pendingEquipment} accent="var(--amber-500)" />
+              <StatCard label="Locações ativas"      value={stats.activeRentals}  accent="var(--green-600)" />
+              <StatCard label="Receita da plataforma"
                 value={`R$ ${Number(stats.totalFees || 0).toFixed(2).replace('.', ',')}`}
                 accent="var(--amber-600)"
               />
@@ -402,7 +401,6 @@ export default function AdminDashboard() {
                 alignItems: 'center',
                 gap: 'var(--space-lg)',
               }}>
-                <div style={{ fontSize: '2.5rem' }}>💰</div>
                 <div>
                   <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--green-700)' }}>
                     Receita Total da Plataforma

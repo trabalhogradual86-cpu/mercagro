@@ -32,7 +32,7 @@ export default function Register() {
         location_city: form.location_city,
         location_state: form.location_state,
       });
-      navigate('/onboarding');
+      navigate('/painel');
     } catch (err) {
       setError(err.message || 'Erro ao criar conta. Tente novamente.');
     } finally {
@@ -55,7 +55,7 @@ export default function Register() {
       <div style={s.right}>
         <div style={s.formWrap} className="animate-fade-up">
           <h1 style={s.formTitle}>Criar conta</h1>
-          <p style={s.formSub}>Já tem conta? <Link to="/login">Entrar</Link></p>
+          <p style={s.formSub}>Já tem conta? <Link to="/entrar">Entrar</Link></p>
 
           <form onSubmit={handleRegister} style={{ marginTop: '1.75rem' }}>
             <div className="form-group">

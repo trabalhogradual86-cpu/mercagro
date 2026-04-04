@@ -26,17 +26,17 @@ export default function Header() {
 
         {/* Nav */}
         <nav style={s.nav}>
-          <Link to="/equipment" style={{ ...s.navLink, ...(isActive('/equipment') ? s.navLinkActive : {}) }}>
+          <Link to="/equipamentos" style={{ ...s.navLink, ...(isActive('/equipamentos') ? s.navLinkActive : {}) }}>
             Equipamentos
           </Link>
-          <Link to="/auctions" style={{ ...s.navLink, ...(isActive('/auctions') ? s.navLinkActive : {}) }}>
+          <Link to="/leiloes" style={{ ...s.navLink, ...(isActive('/leiloes') ? s.navLinkActive : {}) }}>
             Leilões
             <span style={s.liveDot} />
           </Link>
 
           {user ? (
             <>
-              <Link to="/dashboard" style={{ ...s.navLink, ...(isActive('/dashboard') ? s.navLinkActive : {}) }}>
+              <Link to="/painel" style={{ ...s.navLink, ...(isActive('/painel') ? s.navLinkActive : {}) }}>
                 Painel
               </Link>
               <div style={s.userMenu}>
@@ -49,10 +49,10 @@ export default function Header() {
                   <div style={s.dropdown} onClick={() => setMenuOpen(false)}>
                     <p style={s.dropdownName}>{profile?.full_name || user.email}</p>
                     <div style={s.dropdownDivider} />
-                    <Link to="/profile" style={s.dropdownItem}>Meu Perfil</Link>
-                    <Link to="/my-rentals" style={s.dropdownItem}>Minhas Locações</Link>
+                    <Link to="/perfil" style={s.dropdownItem}>Meu Perfil</Link>
+                    <Link to="/minhas-locacoes" style={s.dropdownItem}>Minhas Locações</Link>
                     {(profile?.user_type === 'owner' || profile?.user_type === 'both') && (
-                      <Link to="/my-equipment" style={s.dropdownItem}>Meus Equipamentos</Link>
+                      <Link to="/meus-equipamentos" style={s.dropdownItem}>Meus Equipamentos</Link>
                     )}
                     {profile?.is_admin && (
                       <>
@@ -70,8 +70,8 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link to="/login" style={s.navLink}>Entrar</Link>
-              <Link to="/register" style={s.btnRegister} className="btn btn-primary btn-sm">
+              <Link to="/entrar" style={s.navLink}>Entrar</Link>
+              <Link to="/cadastrar" style={s.btnRegister} className="btn btn-primary btn-sm">
                 Cadastrar
               </Link>
             </>

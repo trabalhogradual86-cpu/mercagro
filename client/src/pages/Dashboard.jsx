@@ -1,48 +1,41 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const CARDS = [
-  {
-    icon: '🚜',
-    title: 'Buscar Equipamentos',
-    desc: 'Encontre máquinas disponíveis para locação na sua região',
-    path: '/equipment',
-    role: 'all',
-    color: 'var(--green-700)',
-  },
-  {
-    icon: '📋',
-    title: 'Minhas Locações',
-    desc: 'Acompanhe suas locações ativas e histórico completo',
-    path: '/my-rentals',
-    role: 'all',
-    color: 'var(--green-600)',
-  },
-  {
-    icon: '🏷️',
-    title: 'Leilões',
-    desc: 'Participe de leilões de equipamentos em tempo real',
-    path: '/auctions',
-    role: 'all',
-    color: 'var(--amber-600)',
-  },
-  {
-    icon: '⚙️',
-    title: 'Meus Equipamentos',
-    desc: 'Gerencie suas máquinas e acompanhe as solicitações recebidas',
-    path: '/my-equipment',
-    role: 'owner',
-    color: 'var(--green-800)',
-  },
-];
+import { api } from '../lib/api';
 
 export default function Dashboard() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const isOwner = profile?.user_type === 'owner' || profile?.user_type === 'both';
+  const isProducer = profile?.user_type === 'producer' || profile?.user_type === 'both';
   const firstName = profile?.full_name?.split(' ')[0] || 'usuário';
 
-  const visibleCards = CARDS.filter(c => c.role === 'all' || (c.role === 'owner' && isOwner));
+  const [myRentals, setMyRentals] = useState([]);
+  const [incoming, setIncoming] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const calls = [];
+        if (isProducer) calls.push(api.get('/api/rentals/my').catch(() => []));
+        else calls.push(Promise.resolve([]));
+        if (isOwner) calls.push(api.get('/api/rentals/incoming').catch(() => []));
+        else calls.push(Promise.resolve([]));
+        const [rentals, inc] = await Promise.all(calls);
+        setMyRentals(rentals || []);
+        setIncoming(inc || []);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [isProducer, isOwner]);
+
+  const activeRentals   = myRentals.filter(r => r.status === 'active').length;
+  const pendingRentals  = myRentals.filter(r => r.status === 'pending').length;
+  const newRequests     = incoming.filter(r => r.status === 'pending').length;
+  const activeIncoming  = incoming.filter(r => ['confirmed', 'active'].includes(r.status)).length;
 
   return (
     <div>
@@ -60,7 +53,7 @@ export default function Dashboard() {
         <div>
           <p className="section-label">Painel</p>
           <h1 className="page-title" style={{ margin: '0.3rem 0 0.25rem' }}>
-            Olá, {firstName} 👋
+            Olá, {firstName}
           </h1>
           <p style={{ color: 'var(--gray-600)', fontSize: '0.92rem' }}>
             {profile?.location_city
@@ -68,76 +61,136 @@ export default function Dashboard() {
               : 'Bem-vindo ao Mercagro'}
           </p>
         </div>
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={() => navigate('/profile')}
-        >
+        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/perfil')}>
           Editar perfil
         </button>
       </div>
 
-      {/* Cards de navegação */}
-      <div className="grid animate-fade-in">
-        {visibleCards.map(card => (
-          <button
-            key={card.path}
-            className="card card-hover"
-            onClick={() => navigate(card.path)}
-            style={{
-              cursor: 'pointer',
-              textAlign: 'left',
-              width: '100%',
-              border: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-sm)',
-            }}
-          >
-            <div style={{
-              width: 48,
-              height: 48,
-              borderRadius: 'var(--radius-md)',
-              background: card.role === 'owner' ? 'var(--soil-100)' : card.title.includes('Leilão') ? 'var(--amber-100)' : 'var(--green-100)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-              marginBottom: 'var(--space-xs)',
-              flexShrink: 0,
-            }}>
-              {card.icon}
+      {/* Alertas de pendências */}
+      {!loading && (newRequests > 0 || pendingRentals > 0) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
+          {newRequests > 0 && (
+            <div
+              onClick={() => navigate('/meus-equipamentos')}
+              style={{
+                background: 'var(--amber-50, #fffbeb)',
+                border: '1px solid var(--amber-200, #fde68a)',
+                borderLeft: '4px solid var(--amber-500)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.75rem 1rem',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--amber-800, #92400e)' }}>
+                {newRequests} {newRequests > 1 ? 'solicitações' : 'solicitação'} aguardando sua confirmação
+              </span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--amber-700, #b45309)' }}>Ver →</span>
             </div>
-            <h3 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.05rem',
-              fontWeight: 700,
-              color: 'var(--green-900)',
-              margin: 0,
-            }}>
-              {card.title}
-            </h3>
-            <p style={{
-              fontSize: '0.88rem',
-              color: 'var(--gray-600)',
-              lineHeight: 1.55,
-              margin: 0,
-              flex: 1,
-            }}>
-              {card.desc}
-            </p>
-            <span style={{
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              color: card.color,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              marginTop: 'var(--space-xs)',
-            }}>
-              Acessar →
-            </span>
+          )}
+          {pendingRentals > 0 && (
+            <div
+              onClick={() => navigate('/minhas-locacoes')}
+              style={{
+                background: 'var(--green-50)',
+                border: '1px solid var(--green-200, #bbf7d0)',
+                borderLeft: '4px solid var(--green-500)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.75rem 1rem',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--green-800)' }}>
+                {pendingRentals} {pendingRentals > 1 ? 'locações' : 'locação'} aguardando confirmação do proprietário
+              </span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--green-700)' }}>Ver →</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Métricas */}
+      {!loading && (
+        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', marginBottom: 'var(--space-xl)' }}>
+          {isProducer && (
+            <>
+              <div
+                className="card"
+                onClick={() => navigate('/minhas-locacoes')}
+                style={{ flex: 1, minWidth: 160, cursor: 'pointer', borderTop: '3px solid var(--green-500)' }}
+              >
+                <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-600)' }}>
+                  Locações ativas
+                </p>
+                <p style={{ margin: '0.3rem 0 0', fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, color: 'var(--green-900)', lineHeight: 1 }}>
+                  {activeRentals}
+                </p>
+              </div>
+              <div
+                className="card"
+                onClick={() => navigate('/minhas-locacoes')}
+                style={{ flex: 1, minWidth: 160, cursor: 'pointer', borderTop: '3px solid var(--amber-500)' }}
+              >
+                <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-600)' }}>
+                  Aguardando confirmação
+                </p>
+                <p style={{ margin: '0.3rem 0 0', fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, color: 'var(--green-900)', lineHeight: 1 }}>
+                  {pendingRentals}
+                </p>
+              </div>
+            </>
+          )}
+          {isOwner && (
+            <>
+              <div
+                className="card"
+                onClick={() => navigate('/meus-equipamentos')}
+                style={{ flex: 1, minWidth: 160, cursor: 'pointer', borderTop: '3px solid var(--amber-500)' }}
+              >
+                <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-600)' }}>
+                  Solicitações novas
+                </p>
+                <p style={{ margin: '0.3rem 0 0', fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, color: 'var(--green-900)', lineHeight: 1 }}>
+                  {newRequests}
+                </p>
+              </div>
+              <div
+                className="card"
+                onClick={() => navigate('/meus-equipamentos')}
+                style={{ flex: 1, minWidth: 160, cursor: 'pointer', borderTop: '3px solid var(--green-600)' }}
+              >
+                <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-600)' }}>
+                  Locações em andamento
+                </p>
+                <p style={{ margin: '0.3rem 0 0', fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, color: 'var(--green-900)', lineHeight: 1 }}>
+                  {activeIncoming}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Ação primária contextual */}
+      <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+        {isProducer && (
+          <button className="btn btn-primary btn-lg" onClick={() => navigate('/equipamentos')}>
+            Buscar Equipamentos
           </button>
-        ))}
+        )}
+        {isOwner && (
+          <button className="btn btn-primary btn-lg" onClick={() => navigate('/equipamentos/novo')}>
+            + Cadastrar Equipamento
+          </button>
+        )}
+        <button className="btn btn-ghost btn-lg" onClick={() => navigate('/leiloes')}>
+          Ver Leilões
+        </button>
       </div>
     </div>
   );

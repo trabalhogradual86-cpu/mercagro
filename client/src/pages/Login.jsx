@@ -15,7 +15,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signIn(form.email, form.password);
-      navigate('/dashboard');
+      navigate('/painel');
     } catch (err) {
       setError(err.message || 'E-mail ou senha incorretos');
     } finally {
@@ -38,7 +38,7 @@ export default function Login() {
       <div style={s.right}>
         <div style={s.formWrap} className="animate-fade-up">
           <h1 style={s.formTitle}>Entrar na plataforma</h1>
-          <p style={s.formSub}>Não tem conta? <Link to="/register">Cadastre-se grátis</Link></p>
+          <p style={s.formSub}>Não tem conta? <Link to="/cadastrar">Cadastre-se grátis</Link></p>
 
           <form onSubmit={handleSubmit} style={{ marginTop: '2rem' }}>
             <div className="form-group">
