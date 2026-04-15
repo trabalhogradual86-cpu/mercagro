@@ -11,12 +11,11 @@ const adminRoutes = require('./routes/admin');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? process.env.CLIENT_URL
-    : true, // permite qualquer origem em desenvolvimento
+    ? (process.env.CLIENT_URL || true)
+    : true,
   credentials: true,
 }));
 app.use(express.json());
@@ -32,7 +31,12 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Servidor Mercagro rodando na porta ${PORT}`);
-  require('./jobs/index');
-});
+module.exports = app;
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`Servidor Mercagro rodando na porta ${PORT}`);
+    require('./jobs/index');
+  });
+}

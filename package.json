@@ -10,9 +10,11 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "pg": "^8.20.0"
+    "puppeteer": "^24.40.0"
   },
   "dependencies": {
-    "puppeteer": "^24.40.0"
+    "@supabase/supabase-js": "^2.103.2",
+    "dotenv": "^17.4.2",
+    "pg": "^8.20.0"
   }
 }
