@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
 
@@ -8,6 +8,8 @@ const ESTADOS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
 export default function Register() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo') || '/painel';
   const [form, setForm] = useState({
     email: '', password: '', full_name: '', cpf_cnpj: '',
     user_type: 'producer', location_city: '', location_state: '',
@@ -32,7 +34,7 @@ export default function Register() {
         location_city: form.location_city,
         location_state: form.location_state,
       });
-      navigate('/painel');
+      navigate(returnTo);
     } catch (err) {
       setError(err.message || 'Erro ao criar conta. Tente novamente.');
     } finally {
@@ -55,7 +57,7 @@ export default function Register() {
       <div style={s.right}>
         <div style={s.formWrap} className="animate-fade-up">
           <h1 style={s.formTitle}>Criar conta</h1>
-          <p style={s.formSub}>Já tem conta? <Link to="/entrar">Entrar</Link></p>
+          <p style={s.formSub}>Já tem conta? <Link to={returnTo !== '/painel' ? `/entrar?returnTo=${encodeURIComponent(returnTo)}` : '/entrar'}>Entrar</Link></p>
 
           <form onSubmit={handleRegister} style={{ marginTop: '1.75rem' }}>
             <div className="form-group">
@@ -69,11 +71,11 @@ export default function Register() {
             </div>
 
             <div className="form-group">
-              <label>Perfil</label>
+              <label>Como você pretende usar a plataforma?</label>
               <select value={form.user_type} onChange={set('user_type')}>
-                <option value="producer">Produtor rural — quero alugar equipamentos</option>
-                <option value="owner">Proprietário — tenho máquinas para alugar</option>
-                <option value="both">Ambos</option>
+                <option value="both">Alugar e disponibilizar equipamentos</option>
+                <option value="producer">Apenas alugar equipamentos de outros</option>
+                <option value="owner">Apenas disponibilizar meus equipamentos</option>
               </select>
             </div>
 

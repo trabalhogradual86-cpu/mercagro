@@ -75,7 +75,7 @@ export default function Equipment() {
           <h1 className="page-title" style={{ margin: '0.3rem 0 0' }}>Equipamentos Disponíveis</h1>
         </div>
         {user && (
-          <button className="btn btn-primary" onClick={() => navigate('/equipment/new')}>
+          <button className="btn btn-primary" onClick={() => navigate('/equipamentos/novo')}>
             + Cadastrar Equipamento
           </button>
         )}
@@ -112,7 +112,6 @@ export default function Equipment() {
         <div className="loading">Buscando equipamentos...</div>
       ) : fetchError ? (
         <div className="empty-state">
-          <div className="empty-icon">⚠</div>
           <p>Não foi possível carregar os equipamentos.</p>
           <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={fetchEquipment}>
             Tentar novamente
@@ -126,7 +125,7 @@ export default function Equipment() {
       ) : (
         <div className="grid animate-fade-in">
           {equipment.map(eq => (
-            <EquipmentCard key={eq.id} eq={eq} onClick={() => navigate(`/equipment/${eq.id}`)} />
+            <EquipmentCard key={eq.id} eq={eq} onClick={() => navigate(`/equipamentos/${eq.id}`)} />
           ))}
         </div>
       )}

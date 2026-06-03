@@ -24,12 +24,14 @@ export default function EquipmentForm() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditing);
   const [error, setError] = useState('');
+  const [aiPriceSuggestion, setAiPriceSuggestion] = useState(null);
+  const [loadingAiPrice, setLoadingAiPrice] = useState(false);
 
   useEffect(() => {
     if (!isEditing) return;
     async function load() {
       try {
-        const data = await api.get(`/api/equipamentos/${id}`);
+        const data = await api.get(`/api/equipment/${id}`);
         if (data.owner_id !== user?.id) {
           navigate('/meus-equipamentos');
           return;
@@ -54,6 +56,29 @@ export default function EquipmentForm() {
     }
     load();
   }, [id, user, isEditing, navigate]);
+
+  async function handleAiPrice() {
+    if (!form?.category || !form?.location_state) return;
+    setLoadingAiPrice(true);
+    setAiPriceSuggestion(null);
+    try {
+      const result = await api.post('/api/ai/price', {
+        equipment_category: form.category,
+        brand: form.brand || '',
+        model: form.model || '',
+        year: form.year ? Number(form.year) : null,
+        location_state: form.location_state,
+      });
+      setAiPriceSuggestion(result);
+      if (result.daily_rate_suggested) {
+        setForm(f => ({ ...f, daily_rate: String(result.daily_rate_suggested) }));
+      }
+    } catch {
+      setAiPriceSuggestion({ error: true });
+    } finally {
+      setLoadingAiPrice(false);
+    }
+  }
 
   async function handlePhotoUpload(e) {
     const files = Array.from(e.target.files);
@@ -81,7 +106,7 @@ export default function EquipmentForm() {
     setLoading(true);
     try {
       if (isEditing) {
-        await api.put(`/api/equipamentos/${id}`, {
+        await api.put(`/api/equipment/${id}`, {
           ...form,
           year: Number(form.year) || null,
           daily_rate: Number(form.daily_rate),
@@ -89,7 +114,7 @@ export default function EquipmentForm() {
         });
         navigate(`/equipamentos/${id}`);
       } else {
-        const data = await api.post('/api/equipamentos', {
+        const data = await api.post('/api/equipment', {
           ...form,
           year: Number(form.year) || null,
           daily_rate: Number(form.daily_rate),
@@ -138,8 +163,59 @@ export default function EquipmentForm() {
           </div>
           <div className="form-group">
             <label>Valor da diária (R$) *</label>
-            <input type="number" required min="1" step="0.01" value={form.daily_rate}
-              onChange={e => setForm({ ...form, daily_rate: e.target.value })} />
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+              <input
+                type="number" required min="1" step="0.01" value={form.daily_rate}
+                onChange={e => setForm({ ...form, daily_rate: e.target.value })}
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={handleAiPrice}
+                disabled={loadingAiPrice || !form.category || !form.location_state}
+                title={!form.location_state ? 'Selecione o estado primeiro' : 'Sugerir preço com base em IA'}
+                style={{
+                  padding: '0.55rem 0.9rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--green-200)',
+                  background: loadingAiPrice ? '#f0fdf4' : 'var(--green-50)',
+                  color: 'var(--green-700)',
+                  cursor: (!form.category || !form.location_state) ? 'not-allowed' : 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  opacity: (!form.category || !form.location_state) ? 0.5 : 1,
+                }}
+              >
+                {loadingAiPrice ? 'Consultando...' : 'Sugerir com IA'}
+              </button>
+            </div>
+            {aiPriceSuggestion && !aiPriceSuggestion.error && (
+              <div style={{
+                marginTop: '0.5rem',
+                padding: '0.6rem 0.8rem',
+                background: '#f0fdf4',
+                border: '1px solid var(--green-200)',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.83rem',
+                color: 'var(--green-800)',
+                lineHeight: 1.5,
+              }}>
+                <strong>Faixa sugerida:</strong> R$ {aiPriceSuggestion.daily_rate_min} – R$ {aiPriceSuggestion.daily_rate_max}/dia
+                &nbsp;&nbsp;·&nbsp;&nbsp;
+                <strong>Recomendado:</strong> R$ {aiPriceSuggestion.daily_rate_suggested}/dia
+                {aiPriceSuggestion.justification && (
+                  <p style={{ margin: '0.3rem 0 0', color: 'var(--green-700)', fontSize: '0.8rem' }}>
+                    {aiPriceSuggestion.justification}
+                  </p>
+                )}
+              </div>
+            )}
+            {aiPriceSuggestion?.error && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: '0.35rem' }}>
+                Não foi possível consultar a IA agora. Defina o valor manualmente.
+              </p>
+            )}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.8rem' }}>
             <div className="form-group">

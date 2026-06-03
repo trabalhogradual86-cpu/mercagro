@@ -33,6 +33,11 @@ export default function Header() {
             Leilões
             <span style={s.liveDot} />
           </Link>
+          {user && (
+            <Link to="/consultor-ia" style={{ ...s.navLink, ...(isActive('/consultor-ia') ? s.navLinkActive : {}) }}>
+              Consultor IA
+            </Link>
+          )}
 
           {user ? (
             <>
@@ -51,14 +56,12 @@ export default function Header() {
                     <div style={s.dropdownDivider} />
                     <Link to="/perfil" style={s.dropdownItem}>Meu Perfil</Link>
                     <Link to="/minhas-locacoes" style={s.dropdownItem}>Minhas Locações</Link>
-                    {(profile?.user_type === 'owner' || profile?.user_type === 'both') && (
-                      <Link to="/meus-equipamentos" style={s.dropdownItem}>Meus Equipamentos</Link>
-                    )}
+                    <Link to="/meus-equipamentos" style={s.dropdownItem}>Meus Equipamentos</Link>
                     {profile?.is_admin && (
                       <>
                         <div style={s.dropdownDivider} />
                         <Link to="/admin" style={{ ...s.dropdownItem, color: '#16a34a', fontWeight: 600 }}>
-                          ⚙ Painel Admin
+                          Painel Admin
                         </Link>
                       </>
                     )}

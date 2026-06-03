@@ -16,14 +16,108 @@ function fmt(dateStr) {
   return `${d}/${m}/${y}`;
 }
 
+function StarRating({ value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.75rem' }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: '1.75rem', lineHeight: 1,
+            color: n <= value ? '#f59e0b' : '#d1d5db',
+            padding: '0 2px',
+          }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReviewModal({ rental, onClose, onSuccess }) {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await api.post('/api/reviews', { rental_id: rental.id, rating, comment });
+      onSuccess();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={modal.overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={modal.box} className="animate-fade-up">
+        <h2 style={modal.title}>Avaliar locação</h2>
+        <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '1.25rem' }}>
+          {rental.equipment?.name} · Proprietário: {rental.owner?.full_name || '—'}
+        </p>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Sua nota</label>
+            <StarRating value={rating} onChange={setRating} />
+          </div>
+          <div className="form-group">
+            <label>Comentário (opcional)</label>
+            <textarea
+              rows={3}
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="Como foi a experiência com este equipamento e proprietário?"
+              style={{ resize: 'vertical' }}
+            />
+          </div>
+          {error && <p className="error-msg">{error}</p>}
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Enviando...' : 'Enviar avaliação'}
+            </button>
+            <button type="button" className="btn" onClick={onClose}
+              style={{ border: '1px solid var(--gray-300)', color: 'var(--gray-700)' }}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function MyRentals() {
   const [rentals, setRentals] = useState([]);
+  const [reviews, setReviews] = useState({});
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
+  const [reviewRental, setReviewRental] = useState(null);
 
   useEffect(() => {
     api.get('/api/rentals/my')
-      .then(data => setRentals(data))
+      .then(async data => {
+        setRentals(data);
+        // Buscar reviews existentes para locações concluídas
+        const completed = data.filter(r => r.status === 'completed');
+        const reviewMap = {};
+        await Promise.all(completed.map(async r => {
+          try {
+            const result = await api.get(`/api/reviews/rental/${r.id}`);
+            reviewMap[r.id] = result;
+          } catch { /* ignora */ }
+        }));
+        setReviews(reviewMap);
+      })
       .catch(() => setRentals([]))
       .finally(() => setLoading(false));
   }, []);
@@ -39,6 +133,14 @@ export default function MyRentals() {
     }
   }
 
+  function handleReviewSuccess() {
+    setToast({ message: 'Avaliação enviada com sucesso!', type: 'success' });
+    const id = reviewRental.id;
+    setReviewRental(null);
+    // Marcar como avaliada localmente
+    setReviews(prev => ({ ...prev, [id]: [{ id: 'local' }] }));
+  }
+
   if (loading) return <div className="loading">Carregando locações...</div>;
 
   return (
@@ -48,6 +150,14 @@ export default function MyRentals() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {reviewRental && (
+        <ReviewModal
+          rental={reviewRental}
+          onClose={() => setReviewRental(null)}
+          onSuccess={handleReviewSuccess}
         />
       )}
 
@@ -68,6 +178,7 @@ export default function MyRentals() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {rentals.map(r => {
             const st = STATUS[r.status] || { label: r.status, badge: 'badge-gray' };
+            const jaAvaliou = reviews[r.id] && reviews[r.id].length > 0;
             return (
               <div key={r.id} className="card animate-fade-in">
                 <div style={s.cardRow}>
@@ -102,6 +213,23 @@ export default function MyRentals() {
                     </button>
                   </div>
                 )}
+                {r.status === 'completed' && (
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--gray-200)' }}>
+                    {jaAvaliou ? (
+                      <span style={{ fontSize: '0.82rem', color: 'var(--gray-500)', fontStyle: 'italic' }}>
+                        Avaliação enviada
+                      </span>
+                    ) : (
+                      <button
+                        className="btn"
+                        style={{ fontSize: '0.82rem', color: 'var(--amber-700)', border: '1px solid #fde68a', background: '#fef9c3', padding: '0.35rem 0.9rem' }}
+                        onClick={() => setReviewRental(r)}
+                      >
+                        Avaliar locação
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -110,6 +238,22 @@ export default function MyRentals() {
     </div>
   );
 }
+
+const modal = {
+  overlay: {
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 1000, padding: '1rem',
+  },
+  box: {
+    background: '#fff', borderRadius: 12, padding: '2rem',
+    width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+  },
+  title: {
+    fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 700,
+    color: 'var(--green-900)', marginBottom: '0.25rem',
+  },
+};
 
 const s = {
   header: {

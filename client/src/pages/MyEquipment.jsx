@@ -18,6 +18,101 @@ function fmt(dateStr) {
   return `${d}/${m}/${y}`;
 }
 
+function AuctionModal({ equipment, onClose, onSuccess }) {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 16);
+  const [form, setForm] = useState({
+    start_price: '',
+    min_increment: '50',
+    starts_at: todayStr,
+    ends_at: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  function set(field) {
+    return e => setForm(f => ({ ...f, [field]: e.target.value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    if (!form.ends_at) { setError('Informe a data/hora de encerramento.'); return; }
+    if (new Date(form.ends_at) <= new Date(form.starts_at)) {
+      setError('Encerramento deve ser após o início.'); return;
+    }
+    setLoading(true);
+    try {
+      await api.post('/api/auctions', {
+        equipment_id: equipment.id,
+        start_price: Number(form.start_price),
+        min_increment: Number(form.min_increment),
+        starts_at: new Date(form.starts_at).toISOString(),
+        ends_at: new Date(form.ends_at).toISOString(),
+      });
+      onSuccess();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={modal.overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={modal.box} className="animate-fade-up">
+        <h2 style={modal.title}>Criar leilão</h2>
+        <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '1.25rem' }}>
+          {equipment.name} · {equipment.category}
+        </p>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Preço inicial (R$) *</label>
+            <input
+              type="number" required min="1" step="0.01"
+              placeholder="Ex: 500.00"
+              value={form.start_price} onChange={set('start_price')}
+            />
+          </div>
+          <div className="form-group">
+            <label>Incremento mínimo (R$) *</label>
+            <input
+              type="number" required min="1" step="0.01"
+              value={form.min_increment} onChange={set('min_increment')}
+            />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label>Início *</label>
+              <input
+                type="datetime-local" required
+                value={form.starts_at} onChange={set('starts_at')}
+              />
+            </div>
+            <div className="form-group">
+              <label>Encerramento *</label>
+              <input
+                type="datetime-local" required
+                value={form.ends_at} onChange={set('ends_at')}
+              />
+            </div>
+          </div>
+          {error && <p className="error-msg">{error}</p>}
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Criando...' : 'Criar leilão'}
+            </button>
+            <button type="button" className="btn" onClick={onClose}
+              style={{ border: '1px solid var(--gray-300)', color: 'var(--gray-700)' }}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function MyEquipment() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +121,7 @@ export default function MyEquipment() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('equipment');
   const [toast, setToast] = useState(null);
+  const [auctionEquipment, setAuctionEquipment] = useState(null);
 
   function showToast(message, type = 'success') {
     setToast({ message, type });
@@ -75,7 +171,6 @@ export default function MyEquipment() {
     if (!confirm('Marcar esta locação como concluída? O equipamento voltará a ficar disponível.')) return;
     try {
       await api.patch(`/api/rentals/${id}/complete`);
-      // Usa callback para evitar stale closure
       setIncoming(prev => {
         const rental = prev.find(r => r.id === id);
         if (rental) {
@@ -91,6 +186,15 @@ export default function MyEquipment() {
     }
   }
 
+  function handleAuctionSuccess() {
+    const name = auctionEquipment?.name;
+    setAuctionEquipment(null);
+    showToast(`Leilão criado com sucesso para "${name}"!`);
+    setEquipment(prev => prev.map(eq =>
+      eq.id === auctionEquipment?.id ? { ...eq, status: 'auction' } : eq
+    ));
+  }
+
   const pendingCount = incoming.filter(r => r.status === 'pending').length;
 
   if (loading) return <div className="loading">Carregando painel...</div>;
@@ -102,6 +206,14 @@ export default function MyEquipment() {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {auctionEquipment && (
+        <AuctionModal
+          equipment={auctionEquipment}
+          onClose={() => setAuctionEquipment(null)}
+          onSuccess={handleAuctionSuccess}
         />
       )}
 
@@ -144,6 +256,7 @@ export default function MyEquipment() {
           <div className="grid animate-fade-in">
             {equipment.map(eq => {
               const st = EQ_STATUS[eq.status] || { label: eq.status, badge: 'badge-gray' };
+              const canAuction = eq.status === 'available' && eq.approval_status === 'approved';
               return (
                 <div key={eq.id} className="card card-hover" style={{ cursor: 'pointer' }}
                   onClick={() => navigate(`/equipamentos/${eq.id}`)}>
@@ -170,12 +283,22 @@ export default function MyEquipment() {
                   <p className="price-tag" style={{ marginTop: '0.5rem', fontSize: '1rem' }}>
                     R$ {Number(eq.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span>/dia</span>
                   </p>
-                  <button
-                    onClick={e => { e.stopPropagation(); navigate(`/equipamentos/${eq.id}/editar`); }}
-                    style={{ marginTop: '0.5rem', padding: '4px 12px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: '0.82rem', color: '#374151' }}
-                  >
-                    Editar
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }} onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => navigate(`/equipamentos/${eq.id}/editar`)}
+                      style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: '0.82rem', color: '#374151' }}
+                    >
+                      Editar
+                    </button>
+                    {canAuction && (
+                      <button
+                        onClick={() => setAuctionEquipment(eq)}
+                        style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #fde68a', background: '#fef9c3', cursor: 'pointer', fontSize: '0.82rem', color: '#92400e', fontWeight: 600 }}
+                      >
+                        Criar leilão
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -244,6 +367,22 @@ export default function MyEquipment() {
     </div>
   );
 }
+
+const modal = {
+  overlay: {
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 1000, padding: '1rem',
+  },
+  box: {
+    background: '#fff', borderRadius: 12, padding: '2rem',
+    width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+  },
+  title: {
+    fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 700,
+    color: 'var(--green-900)', marginBottom: '0.25rem',
+  },
+};
 
 const s = {
   pageHeader: {

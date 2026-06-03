@@ -90,7 +90,7 @@ export default function Auctions() {
       ) : (
         <div className="grid animate-fade-in">
           {auctions.map(a => (
-            <AuctionCard key={a.id} auction={a} onClick={() => navigate(`/auctions/${a.id}`)} />
+            <AuctionCard key={a.id} auction={a} onClick={() => navigate(`/leiloes/${a.id}`)} />
           ))}
         </div>
       )}

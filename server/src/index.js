@@ -8,6 +8,7 @@ const rentalRoutes = require('./routes/rentals');
 const auctionRoutes = require('./routes/auctions');
 const aiRoutes = require('./routes/ai');
 const adminRoutes = require('./routes/admin');
+const reviewRoutes = require('./routes/reviews');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -26,6 +27,7 @@ app.use('/api/rentals', rentalRoutes);
 app.use('/api/auctions', auctionRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

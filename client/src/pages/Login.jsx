@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo') || '/painel';
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signIn(form.email, form.password);
-      navigate('/painel');
+      navigate(returnTo);
     } catch (err) {
       setError(err.message || 'E-mail ou senha incorretos');
     } finally {
@@ -38,7 +40,7 @@ export default function Login() {
       <div style={s.right}>
         <div style={s.formWrap} className="animate-fade-up">
           <h1 style={s.formTitle}>Entrar na plataforma</h1>
-          <p style={s.formSub}>Não tem conta? <Link to="/cadastrar">Cadastre-se grátis</Link></p>
+          <p style={s.formSub}>Não tem conta? <Link to={returnTo !== '/painel' ? `/cadastrar?returnTo=${encodeURIComponent(returnTo)}` : '/cadastrar'}>Cadastre-se grátis</Link></p>
 
           <form onSubmit={handleSubmit} style={{ marginTop: '2rem' }}>
             <div className="form-group">

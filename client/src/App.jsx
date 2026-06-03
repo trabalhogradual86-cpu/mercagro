@@ -14,6 +14,7 @@ import MyEquipment from './pages/MyEquipment';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
+import AiRecommend from './pages/AiRecommend';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/meus-equipamentos" element={<PrivateRoute><MyEquipment /></PrivateRoute>} />
           <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/consultor-ia" element={<PrivateRoute><AiRecommend /></PrivateRoute>} />
         </Routes>
       </main>
     </>

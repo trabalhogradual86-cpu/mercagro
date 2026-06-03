@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,7 @@ export default function AuctionDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
   const [bidAmount, setBidAmount] = useState('');
@@ -166,9 +167,23 @@ export default function AuctionDetail() {
             )}
 
             {!user && (
-              <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--gray-600)' }}>
-                <a href="/login" style={{ color: 'var(--green-700)' }}>Entre</a> para participar do leilão.
-              </p>
+              <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1.25rem' }}>
+                <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '0.75rem' }}>
+                  Faça login para participar do leilão.
+                </p>
+                <button
+                  className="btn btn-amber btn-full"
+                  onClick={() => navigate(`/entrar?returnTo=${encodeURIComponent(location.pathname)}`)}
+                >
+                  Entrar para dar lance
+                </button>
+                <p style={{ fontSize: '0.82rem', color: 'var(--gray-500)', textAlign: 'center', marginTop: '0.5rem' }}>
+                  Não tem conta?{' '}
+                  <a href={`/cadastrar?returnTo=${encodeURIComponent(location.pathname)}`} style={{ color: 'var(--green-700)' }}>
+                    Cadastre-se grátis
+                  </a>
+                </p>
+              </div>
             )}
 
             {user && auction.owner_id === user.id && (

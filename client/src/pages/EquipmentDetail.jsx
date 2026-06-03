@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,6 +7,7 @@ export default function EquipmentDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [equipment, setEquipment] = useState(null);
   const [rental, setRental] = useState({ start_date: '', end_date: '' });
   const [aiPrice, setAiPrice] = useState(null);
@@ -177,14 +178,29 @@ export default function EquipmentDetail() {
                   </div>
                 </div>
 
-                {totalDays > 0 && (
-                  <div style={s.totalBox}>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)' }}>{totalDays} dia{totalDays !== 1 ? 's' : ''}</span>
-                    <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
-                      R$ {(totalDays * equipment.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                )}
+                {totalDays > 0 && (() => {
+                  const subtotal = totalDays * equipment.daily_rate;
+                  const fee = subtotal * 0.01;
+                  const total = subtotal + fee;
+                  return (
+                    <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <div style={s.totalRow}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)' }}>{totalDays} dia{totalDays !== 1 ? 's' : ''} × R$ {Number(equipment.daily_rate).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--gray-700)' }}>R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div style={s.totalRow}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--gray-500)' }}>Taxa da plataforma (1%)</span>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--gray-500)' }}>R$ {fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div style={{ ...s.totalRow, ...s.totalBoxFinal }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--green-900)' }}>Total</span>
+                        <span style={{ fontWeight: 700, color: 'var(--green-800)', fontSize: '1rem' }}>
+                          R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {error && <p className="error-msg">{error}</p>}
                 <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: '0.75rem' }} disabled={renting}>
@@ -210,8 +226,20 @@ export default function EquipmentDetail() {
 
           {!user && (
             <div className="card">
-              <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)' }}>
-                <a href="/entrar" style={{ color: 'var(--green-700)' }}>Entre na plataforma</a> para solicitar a locação deste equipamento.
+              <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '0.75rem' }}>
+                Faça login para solicitar a locação deste equipamento.
+              </p>
+              <button
+                className="btn btn-primary btn-full"
+                onClick={() => navigate(`/entrar?returnTo=${encodeURIComponent(location.pathname)}`)}
+              >
+                Entrar para solicitar
+              </button>
+              <p style={{ fontSize: '0.82rem', color: 'var(--gray-500)', textAlign: 'center', marginTop: '0.5rem' }}>
+                Não tem conta?{' '}
+                <a href={`/cadastrar?returnTo=${encodeURIComponent(location.pathname)}`} style={{ color: 'var(--green-700)' }}>
+                  Cadastre-se grátis
+                </a>
               </p>
             </div>
           )}
@@ -253,14 +281,17 @@ const s = {
     color: 'var(--green-900)',
     marginBottom: '1rem',
   },
-  totalBox: {
+  totalRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: '0.3rem 0.9rem',
+  },
+  totalBoxFinal: {
     background: 'var(--green-50)',
     border: '1px solid var(--green-100)',
     borderRadius: 'var(--radius-sm)',
-    padding: '0.6rem 0.9rem',
-    marginTop: '0.5rem',
+    padding: '0.5rem 0.9rem',
+    marginTop: '0.15rem',
   },
 };
