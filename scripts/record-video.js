@@ -29,7 +29,7 @@ const path = require('path');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-const BASE = 'http://localhost:5173';
+const BASE = 'http://localhost:5175';
 
 const FFMPEG_CANDIDATES = [
   'C:/Users/paulo/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1-full_build/bin/ffmpeg.exe',
