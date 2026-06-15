@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import AiRecommend from './pages/AiRecommend';
+import ChatBot from './components/ChatBot';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -35,6 +36,7 @@ export default function App() {
   return (
     <>
       <Header />
+      <ChatBot />
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
